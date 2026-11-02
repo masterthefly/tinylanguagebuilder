@@ -1,0 +1,84 @@
+name: Deploy to GitHub Pages
+
+# Builds the WebAssembly engine and the sample text, then publishes the web/ folder:
+#   the app       https://<owner>.github.io/<repo>/
+#   the textbook  https://<owner>.github.io/<repo>/textbook/
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+env:
+  # Must match the wasm-bindgen version pinned in crates/tlm-wasm/Cargo.toml.
+  WASM_BINDGEN_VERSION: "0.2.130"
+  TINYSTORIES_URL: https://huggingface.co/datasets/roneneldan/TinyStories/resolve/main/TinyStoriesV2-GPT4-valid.txt
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: wasm32-unknown-unknown
+
+      - uses: Swatinem/rust-cache@v2
+
+      - name: Install wasm-bindgen-cli (pinned)
+        run: |
+          if [ "$(wasm-bindgen --version 2>/dev/null | cut -d' ' -f2)" != "$WASM_BINDGEN_VERSION" ]; then
+            cargo install wasm-bindgen-cli --version "$WASM_BINDGEN_VERSION" --locked
+          fi
+          wasm-bindgen --version
+
+      - name: Build the WebAssembly module
+        run: |
+          cargo build -p tlm-wasm --target wasm32-unknown-unknown --release
+          wasm-bindgen --target web --out-dir web/pkg --out-name tlm_wasm \
+            target/wasm32-unknown-unknown/release/tlm_wasm.wasm
+          ls -l web/pkg
+
+      - name: Cache the TinyStories download
+        id: stories
+        uses: actions/cache@v4
+        with:
+          path: data/tinystories/valid.txt
+          key: tinystories-v2-gpt4-valid
+
+      - name: Download TinyStories
+        if: steps.stories.outputs.cache-hit != 'true'
+        run: |
+          mkdir -p data/tinystories
+          curl --fail --location --retry 5 --retry-delay 5 --output data/tinystories/valid.txt "$TINYSTORIES_URL"
+
+      - name: Make the 8 MB sample
+        run: |
+          node scripts/make-sample.mjs
+          test "$(stat -c %s web/data/tinystories-8mb.txt)" -gt 7000000
+
+      - uses: actions/configure-pages@v5
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: web
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

@@ -1,5 +1,12 @@
 # TinyLanguageBuilder
 
+[![CI](https://github.com/masterthefly/tinylanguagebuilder/actions/workflows/ci.yml/badge.svg)](https://github.com/masterthefly/tinylanguagebuilder/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+
+**[Open the app](https://masterthefly.github.io/tinylanguagebuilder/)** |
+**[Read the interactive textbook](https://masterthefly.github.io/tinylanguagebuilder/textbook/)**
+(nothing to install: it runs in your browser)
+
 Build, train and understand a tiny language model on your own CPU: no GPU, no ML framework, no account, no server.
 It runs natively as a command-line tool (`tlm`) and **in a browser tab** (using WebAssembly and Web Workers), and it
 comes with an **interactive textbook** that opens up the same engine one idea at a time.
@@ -78,11 +85,14 @@ On Linux or macOS, use `./target/release/tlm` and forward slashes. Run `tlm --he
 
 ## Browser app quick start
 
-The app needs a sample of the training text at `web/data/tinystories-8mb.txt`: the first 8 MB of
-`valid.txt`, cut after the last `<|endoftext|>`. `PROJECT_STATUS.md` (section 8) has a PowerShell snippet that
-creates it.
+The app and the textbook need a sample of the training text at `web/data/tinystories-8mb.txt`: the first 8 MB of
+`valid.txt`, cut after the last `<|endoftext|>`. `node scripts/make-sample.mjs` creates it, on any OS.
+
+Every push to `main` rebuilds the WebAssembly and the sample and publishes the site to GitHub Pages
+(see `.github/workflows/pages.yml`); that is what the links at the top point to. To build it yourself:
 
 ```powershell
+node scripts/make-sample.mjs                     # builds web/data/tinystories-8mb.txt from data/tinystories/valid.txt
 .\scripts\build-web.ps1                          # compiles to WebAssembly into web/pkg
 python -m http.server 8080 --directory web       # then open http://localhost:8080/
 ```
@@ -140,6 +150,12 @@ node scripts/run-e2e.mjs http://localhost:8080/ scripts/e2e-web.mjs
 - Browser scaling flattens past 4–8 workers because all gradients pass through one leader worker.
 - Results are exact on one machine but not bit-identical across different CPUs.
 - The `tlm` CLI has no unit tests of its own.
+
+## Data
+
+The training text is [TinyStories](https://huggingface.co/datasets/roneneldan/TinyStories) by Ronen Eldan and Yuanzhi Li
+(2023), released under the CDLA-Sharing-1.0 license. The repository does not contain it: the live site serves an 8 MB
+excerpt of the validation file, and you download the original yourself to build locally.
 
 ## License
 
