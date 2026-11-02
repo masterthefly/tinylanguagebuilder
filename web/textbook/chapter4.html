@@ -1,0 +1,147 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>The Tiny Textbook: Learning</title>
+  <link rel="icon" href="data:,">
+  <link rel="stylesheet" href="../style.css">
+  <link rel="stylesheet" href="book.css">
+</head>
+<body>
+  <header class="top book-top">
+    <p class="crumb"><a href="../">TinyLanguageBuilder</a> / <a href="./">The Tiny Textbook</a></p>
+    <h1>Chapter 4: Learning</h1>
+    <p>The model starts as random numbers and ends up writing sentences. Nobody tells it any grammar. All it ever gets is a
+       score for how surprised it was by the right answer, and a rule for nudging its numbers to be a little less surprised
+       next time. This chapter shows both, first on a toy and then on the real model.</p>
+  </header>
+
+  <main class="book">
+    <section class="panel prose" aria-labelledby="h-loss">
+      <h2 id="h-loss">1. Surprise is the score</h2>
+      <p>Training shows the model some text and asks, at every position: <em>what comes next?</em> The model answers with a
+         probability for every token in its vocabulary. We then look at the probability <em>p</em> it gave to the token that
+         really came next, and turn it into a penalty called the <strong>loss</strong>:</p>
+      <p><span class="formula">loss = &minus;ln(p)</span></p>
+      <p>If the model was sure and right (p near 1) the loss is near 0. If it gave the right token only a one in a thousand
+         chance, the loss is large. A model that knows nothing spreads its probability evenly, so with a vocabulary of 512
+         tokens it scores <em>ln 512 &asymp; 6.24</em> everywhere. That number is the starting line.</p>
+      <div class="table-wrap">
+        <table class="merge-table loss-table">
+          <thead><tr><th scope="col">Probability given to the right token</th><th scope="col">Loss</th></tr></thead>
+          <tbody>
+            <tr><td>0.9 (confident, right)</td><td>0.11</td></tr>
+            <tr><td>0.5 (a coin flip)</td><td>0.69</td></tr>
+            <tr><td>0.1</td><td>2.30</td></tr>
+            <tr><td>1 in 512 (pure guessing)</td><td>6.24</td></tr>
+            <tr><td>0.0001 (confident, wrong)</td><td>9.21</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>The loss punishes confident mistakes hard, which is exactly what you want. Training is the search for numbers that make
+         the average loss over lots of text as small as possible.</p>
+    </section>
+
+    <section class="panel widget" aria-labelledby="h-toy">
+      <h2 id="h-toy">2. Rolling downhill</h2>
+      <p>How do you improve a number when you cannot see the whole landscape? You feel the slope where you stand and step
+         downhill. That slope is the <strong>gradient</strong>, and the step rule is <strong>gradient descent</strong>:</p>
+      <p><span class="formula">new w = w &minus; learning rate &times; slope</span></p>
+      <p>Here is the smallest possible model: one number <em>w</em>, and a loss that is lowest at <em>w</em> = 3. You choose
+         where it starts and the <strong>learning rate</strong>, the size of each step.</p>
+      <div class="row">
+        <label class="field grow">Learning rate <output id="lr-out">0.30</output>
+          <input id="lr" type="range" min="0.02" max="1.05" step="0.01" value="0.30">
+        </label>
+        <label class="field grow">Start at w = <output id="w0-out">-3.0</output>
+          <input id="w0" type="range" min="-4" max="8" step="0.5" value="-3">
+        </label>
+      </div>
+      <div class="row">
+        <button id="toy-step" class="primary">Take a step</button>
+        <button id="toy-run">Run 20 steps</button>
+        <button id="toy-reset">Reset</button>
+      </div>
+      <svg id="toy" class="toy" role="img" aria-label="A bowl-shaped loss curve with the current position marked as a ball"></svg>
+      <p id="toy-line" class="latest" aria-live="polite"></p>
+      <p class="hint">Try a tiny learning rate (slow but safe), then about 0.9 (it overshoots and zigzags, yet still arrives),
+         then anything above 1.0 (each step lands further away than the last: it diverges). Real training has the same trap,
+         which is why the learning rate is the setting people tune most. The real model has about 60,000 numbers instead of
+         one, and the gradient gives the slope for all of them at once. Working that out efficiently is
+         <em>backpropagation</em>, and it is what the Rust code in this project does by hand.</p>
+    </section>
+
+    <section class="panel widget" aria-labelledby="h-train">
+      <h2 id="h-train">3. Train the real model</h2>
+      <p id="status" class="status" role="status">Loading the engine…</p>
+      <div class="row">
+        <label class="field grow">Training steps
+          <select id="steps">
+            <option value="500">500 (quick look)</option>
+            <option value="1500" selected>1,500</option>
+            <option value="3000">3,000 (best)</option>
+          </select>
+        </label>
+        <button id="btn-train" class="primary" disabled>Train</button>
+      </div>
+      <progress id="progress" max="1" value="0" hidden aria-label="Training progress"></progress>
+      <svg id="curve" class="curve" role="img" aria-label="Loss against training step"></svg>
+      <ul class="legend" aria-label="Chart key">
+        <li><span class="dot cur-train" aria-hidden="true"></span>training loss (text it is learning from)</li>
+        <li><span class="dot cur-val" aria-hidden="true"></span>held-out loss (text it has never seen)</li>
+        <li><span class="dash" aria-hidden="true"></span>guessing: ln 512 = 6.24</li>
+      </ul>
+      <p id="model-line" class="hint"></p>
+      <p class="hint">The thin line is noisy because each step uses a different small batch of text. The held-out line is the
+         honest one: if it stopped falling while the training line kept dropping, the model would be memorising rather than
+         learning. Early on the loss drops quickly (the model first learns that spaces and common words are frequent), then it
+         slows to a crawl, which is typical.</p>
+    </section>
+
+    <section class="panel widget" aria-labelledby="h-see">
+      <h2 id="h-see">4. What the model expected</h2>
+      <p>Pick a moment in training, then see how surprised that version of the model is by a sentence. Each token below is
+         shaded by its loss: pale means the model saw it coming, solid means it was a shock.</p>
+      <label class="field">Model at training step <output id="snap-out">0</output>
+        <input id="snap" type="range" min="0" max="0" step="1" value="0" disabled>
+      </label>
+      <label class="field">Your text
+        <textarea id="text" rows="2" spellcheck="false">Lily and her dog went to the park. She gave the dog a ball.</textarea>
+      </label>
+      <p id="mean-line" class="latest" aria-live="polite"></p>
+      <p id="trunc-note" class="hint" hidden></p>
+      <div id="surprise" class="surprise" role="group" aria-label="Tokens shaded by loss"></div>
+      <ul class="legend" aria-label="Shading key">
+        <li><span class="swatch-scale" aria-hidden="true"></span>loss: 0 (pale) to 6+ (solid)</li>
+      </ul>
+      <h3 id="guess-title" class="latest" aria-live="polite"></h3>
+      <ol id="guess-list" class="nn guesses"></ol>
+      <p class="hint">Click any token to see what the model guessed would come <em>after</em> it, with the real next token marked.
+         At step 0 the guesses are junk with nearly equal chances. After training they are plausible words, and the right one
+         is often near the top. A model this size is still wrong a lot, and that is fine: a good guess is only a probability.</p>
+    </section>
+
+    <section class="panel prose" aria-labelledby="h-take">
+      <h2 id="h-take">5. What to take from this, and what not to</h2>
+      <p><strong>One number drives everything.</strong> Pre-training, fine-tuning and preference tuning all use this same loop:
+         measure the loss, compute the gradient, take a small step. They differ only in <em>which</em> loss they measure.</p>
+      <p><strong>Lower loss is not always better behaviour.</strong> The loss only measures how well the model predicts text like
+         its training data. A model can predict well and still say untrue or unhelpful things.</p>
+      <p><strong>The curve flattens.</strong> A tiny model has a limit on what it can capture, set by its size and the amount of
+         text it saw. More steps past that point buy little. Bigger models and more data are what move the floor.</p>
+      <p>Next chapter: how the model turns those probabilities into words, and why a setting called temperature changes
+         whether it plays safe or gets creative.</p>
+    </section>
+
+    <nav class="pager" aria-label="Chapters">
+      <a href="chapter3.html">← 3. Attention</a>
+      <a href="./">Contents</a>
+      <a href="chapter5.html">5. Sampling →</a>
+    </nav>
+  </main>
+
+  <script type="module" src="chapter4.js"></script>
+  <script type="module" src="explain.js"></script>
+</body>
+</html>

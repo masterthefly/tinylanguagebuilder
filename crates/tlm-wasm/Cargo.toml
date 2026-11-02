@@ -1,0 +1,16 @@
+[package]
+name = "tlm-wasm"
+version = "0.1.0"
+edition = "2021"
+description = "WebAssembly bindings: train and run tiny language models in the browser"
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[dependencies]
+tlm-core = { path = "../tlm-core" }
+# Must match the installed wasm-bindgen CLI exactly.
+wasm-bindgen = "=0.2.130"
+console_error_panic_hook = "0.1"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"

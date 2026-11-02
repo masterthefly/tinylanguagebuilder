@@ -1,0 +1,149 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>The Tiny Textbook: Attention</title>
+  <link rel="icon" href="data:,">
+  <link rel="stylesheet" href="../style.css">
+  <link rel="stylesheet" href="book.css">
+</head>
+<body>
+  <header class="top book-top">
+    <p class="crumb"><a href="../">TinyLanguageBuilder</a> / <a href="./">The Tiny Textbook</a></p>
+    <h1>Chapter 3: Attention</h1>
+    <p>An embedding looks at one token alone. But the meaning of a word depends on the words before it. Attention is the
+       step where tokens look back at each other and pass information along. This chapter opens up the real attention
+       layers of a model you train here.</p>
+  </header>
+
+  <main class="book">
+    <section class="panel prose" aria-labelledby="h-why">
+      <h2 id="h-why">1. Tokens need to talk to each other</h2>
+      <p>In "Lily gave the dog a ball. <em>She</em> smiled", the word <em>She</em> is only useful if the model can find
+         <em>Lily</em> earlier in the text. Looking up an embedding cannot do that, because each row of the table knows
+         nothing about its neighbours. <strong>Attention</strong> is the mechanism that lets every token look at the tokens
+         before it and blend in what it finds.</p>
+      <p>The key word is <em>before</em>. The model is trained to guess the next token, so a token may never look at the
+         tokens after it, or it could just copy the answer. This rule is called a <em>causal mask</em>, and you will see
+         it as the empty triangle in the picture below.</p>
+    </section>
+
+    <section class="panel prose" aria-labelledby="h-qkv">
+      <h2 id="h-qkv">2. Query, key, value</h2>
+      <p>Each token gets three short vectors, made from its embedding by three learned tables of numbers:</p>
+      <ul>
+        <li>a <strong>query</strong>: "what am I looking for?"</li>
+        <li>a <strong>key</strong>: "what do I contain, for anyone who is looking?"</li>
+        <li>a <strong>value</strong>: "what I will hand over if you pick me."</li>
+      </ul>
+      <p>To decide where token <em>i</em> looks, take its query and compare it with the key of every earlier token
+         (including itself) using a dot product. A big score means a good match. The scores are divided by the square root
+         of the vector length to keep them moderate, then a <em>softmax</em> turns them into weights that are positive and
+         add up to exactly 1. Finally the token takes a weighted average of the values. That average is what attention
+         gives back.</p>
+      <p>Below, the real numbers from a real model. First train one; an untrained model attends almost evenly.</p>
+    </section>
+
+    <section class="panel widget" aria-labelledby="h-train">
+      <h2 id="h-train">3. Get a model</h2>
+      <p id="status" class="status" role="status">Loading the engine…</p>
+      <div class="row">
+        <label class="field grow">Training steps
+          <select id="steps">
+            <option value="500">500 (quick look)</option>
+            <option value="1500" selected>1,500</option>
+            <option value="3000">3,000 (best)</option>
+          </select>
+        </label>
+        <button id="btn-train" class="primary" disabled>Train</button>
+      </div>
+      <progress id="progress" max="1" value="0" hidden aria-label="Training progress"></progress>
+      <fieldset class="which">
+        <legend>Which model to look inside</legend>
+        <label class="choice"><input type="radio" name="which" value="untrained" checked> Untrained (random numbers)</label>
+        <label class="choice"><input type="radio" name="which" value="trained" disabled> Trained <span id="trained-note" class="hint"></span></label>
+      </fieldset>
+      <p id="model-line" class="hint"></p>
+    </section>
+
+    <section class="panel widget" aria-labelledby="h-map">
+      <h2 id="h-map">4. Who looks at whom</h2>
+      <label class="field">Your text
+        <textarea id="text" rows="2" spellcheck="false">Lily and her dog went to the park. She gave the dog a ball.</textarea>
+      </label>
+      <div class="row">
+        <label class="field grow">Layer
+          <select id="layer"></select>
+        </label>
+        <label class="field grow">Head
+          <select id="head"></select>
+        </label>
+      </div>
+      <p id="trunc-note" class="hint" hidden></p>
+      <div class="heat-wrap">
+        <svg id="heat" class="heat" role="img" aria-label="Attention weights: each row is a token, each column a token it can look at"></svg>
+      </div>
+      <ul class="legend" aria-label="Heat map key">
+        <li><span class="swatch-scale" aria-hidden="true"></span>weight: 0 (pale) to 1 (solid)</li>
+        <li><span class="swatch-mask" aria-hidden="true"></span>not allowed: the future</li>
+      </ul>
+      <p class="hint">Each <strong>row</strong> is a token that is looking; each <strong>column</strong> is a token it can look at.
+         A row's weights add up to 1. Click a row to see its numbers below.</p>
+    </section>
+
+    <section class="panel widget" aria-labelledby="h-row">
+      <h2 id="h-row">5. One token, step by step</h2>
+      <p id="row-title" class="latest" aria-live="polite"></p>
+      <div class="table-wrap">
+        <table class="merge-table score-table">
+          <thead><tr><th scope="col">Looks at</th><th scope="col">Score</th><th scope="col">e<sup>score &minus; top</sup></th><th scope="col">Weight</th><th scope="col"><span class="sr">Bar</span></th></tr></thead>
+          <tbody id="score-rows"></tbody>
+          <tfoot><tr><th scope="row">Total</th><td></td><td id="exp-total"></td><td id="w-total"></td><td></td></tr></tfoot>
+        </table>
+      </div>
+      <p class="hint">Softmax in three moves: raise e to each score (so everything is positive and bigger scores pull ahead),
+         add them up, and divide each by the total (so the weights sum to 1). The middle column measures every score from the
+         largest one, which keeps the numbers small and leaves the weights exactly the same.</p>
+    </section>
+
+    <section class="panel widget" aria-labelledby="h-heads">
+      <h2 id="h-heads">6. What is each head doing?</h2>
+      <p>For your text above, the average share of attention each head gives to a few simple targets (skipping the first
+         three tokens, which have almost nothing to look at):</p>
+      <div class="table-wrap">
+        <table class="merge-table heads-table">
+          <thead><tr><th scope="col">Head</th><th scope="col">Itself</th><th scope="col">Previous token</th><th scope="col">First token</th><th scope="col">All others</th></tr></thead>
+          <tbody id="head-rows"></tbody>
+        </table>
+      </div>
+      <p id="even-note" class="hint"></p>
+      <p>In the runs I looked at (1,500 to 3,000 steps), both layer-1 heads ended up giving roughly a quarter to a third of
+         their attention to the previous token, against about a tenth for an even spread, while the layer-2 heads stayed
+         more diffuse. Your run may differ a little, which is the point of measuring it yourself.</p>
+    </section>
+
+    <section class="panel prose" aria-labelledby="h-take">
+      <h2 id="h-take">7. What to take from this, and what not to</h2>
+      <p><strong>Several heads, several habits.</strong> Each layer runs a few attention heads side by side, each with its own query,
+         key and value tables, and then combines them. Training is free to let different heads specialise: one may mostly
+         look one step back, another may spread out. Compare the rows of the table above before and after training.</p>
+      <p><strong>Layers stack.</strong> The second layer looks at tokens that the first layer has already mixed, so it can combine
+         information in ways one layer cannot.</p>
+      <p><strong>A weight is not an explanation.</strong> A high weight shows where information <em>can</em> flow, not why the model
+         answered as it did. And this model is tiny: it has 2 layers and 2 heads, trained for a minute on children's stories,
+         so don't expect it to resolve "She" to "Lily". The mechanism is identical in far bigger models; only the scale differs.</p>
+      <p>Next chapter: how the model learns, meaning loss, gradients and the small steps that make all of this work.</p>
+    </section>
+
+    <nav class="pager" aria-label="Chapters">
+      <a href="chapter2.html">← 2. Embeddings</a>
+      <a href="./">Contents</a>
+      <a href="chapter4.html">4. Learning →</a>
+    </nav>
+  </main>
+
+  <script type="module" src="chapter3.js"></script>
+  <script type="module" src="explain.js"></script>
+</body>
+</html>

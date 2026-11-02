@@ -1,0 +1,14 @@
+[package]
+name = "tlm-core"
+version = "0.1.0"
+edition = "2021"
+description = "Core math and model code for TinyLanguageModel (CPU only)"
+
+[features]
+# Times every matmul call (see matrix::profile). Off by default: it costs a little speed.
+profile = []
+# Use the simple matmul instead of the fast one. For benchmarking comparisons only.
+naive-matmul = []
+
+[dependencies]
+serde_json = "1"

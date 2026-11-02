@@ -1,0 +1,129 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>The Tiny Textbook: Embeddings</title>
+  <link rel="icon" href="data:,">
+  <link rel="stylesheet" href="../style.css">
+  <link rel="stylesheet" href="book.css">
+</head>
+<body>
+  <header class="top book-top">
+    <p class="crumb"><a href="../">TinyLanguageBuilder</a> / <a href="./">The Tiny Textbook</a></p>
+    <h1>Chapter 2: Embeddings</h1>
+    <p>Chapter 1 turned text into token numbers. But the number 437 says nothing about the token it names. This chapter
+       shows how a model gives every token a list of numbers it can <em>learn</em>, and what that list ends up meaning.</p>
+  </header>
+
+  <main class="book">
+    <section class="panel prose" aria-labelledby="h-labels">
+      <h2 id="h-labels">1. Token ids are only labels</h2>
+      <p>Token 437 is not "bigger" than token 436 in any useful way, and nothing about the numbers says
+         <code>·dog</code> and <code>·cat</code> are alike. If the model did arithmetic on raw ids it would learn nonsense.</p>
+      <p>So the first layer of the model is a <strong>look-up table</strong>: one row per token, each row a short list of
+         numbers (a <em>vector</em>). The model reads the token id, fetches that row, and works with the row from then on.
+         The rows start out random. Training nudges them, a little at a time, so that tokens which behave alike
+         end up with similar rows. The table is called the <em>embedding table</em>, and nobody writes its contents by hand.</p>
+      <p>Below, a tiny model starts with a random table. Press <strong>Train</strong> and the real training code runs in
+         your browser. Every few hundred steps it keeps a snapshot of the table, so afterwards you can scrub back through
+         the training and watch meaning appear.</p>
+    </section>
+
+    <section class="panel widget" aria-labelledby="h-train">
+      <h2 id="h-train">2. Train a tiny model</h2>
+      <p id="status" class="status" role="status">Loading the engine…</p>
+      <div class="row">
+        <label class="field grow">Training steps
+          <select id="steps">
+            <option value="500">500 (quick look)</option>
+            <option value="1500" selected>1,500</option>
+            <option value="3000">3,000 (best)</option>
+          </select>
+        </label>
+        <button id="btn-train" class="primary" disabled>Train</button>
+      </div>
+      <progress id="progress" max="1" value="0" hidden aria-label="Training progress"></progress>
+      <p id="model-line" class="hint"></p>
+
+      <label class="field">Snapshot: <output id="snap-out">step 0 (random)</output>
+        <input id="snap" type="range" min="0" max="0" value="0" step="1" disabled>
+      </label>
+    </section>
+
+    <section class="panel widget" aria-labelledby="h-vec">
+      <h2 id="h-vec">3. One token, one vector</h2>
+      <label class="field">Pick a token (type its text, or choose one below)
+        <input id="token-input" type="text" list="token-list" autocomplete="off" spellcheck="false" value=" the">
+      </label>
+      <datalist id="token-list"></datalist>
+      <div id="probes" class="chips probes" role="group" aria-label="Example tokens"></div>
+      <p id="token-note" class="hint" aria-live="polite"></p>
+
+      <h3>Its vector at this snapshot <span class="hint">(<span id="dim-out">32</span> numbers; blue above zero, orange below)</span></h3>
+      <svg id="vec" class="vec" role="img" aria-label="Bar chart of the vector's numbers"></svg>
+    </section>
+
+    <section class="panel prose" aria-labelledby="h-sim">
+      <h2 id="h-sim">4. Similar rows, similar tokens</h2>
+      <p>How do we say that two vectors are alike? By the angle between them. <em>Cosine similarity</em> is 1 when two
+         vectors point the same way, 0 when they are unrelated, and −1 when they are opposite. Nobody told the model that
+         <code>·dog</code> and <code>·cat</code> are related. They end up pointing the same way because the model predicts
+         the next token better when it treats them alike: they tend to follow the same words and be followed by the same words.</p>
+    </section>
+
+    <section class="panel widget" aria-labelledby="h-nn">
+      <h2 id="h-nn">5. Nearest neighbours: before and after</h2>
+      <div class="two">
+        <div>
+          <h3 class="first">At the start (random)</h3>
+          <ol id="nn-before" class="nn"></ol>
+        </div>
+        <div>
+          <h3 class="first" id="nn-now-title">At this snapshot</h3>
+          <ol id="nn-now" class="nn"></ol>
+        </div>
+      </div>
+      <p class="hint">Left: the random table you started with. Right: the snapshot chosen by the slider above.
+         Bars show cosine similarity (0 to 1). Neighbours are chosen from the 512-token vocabulary only.</p>
+    </section>
+
+    <section class="panel widget" aria-labelledby="h-map">
+      <h2 id="h-map">6. A map of the whole table</h2>
+      <p class="hint" id="map-note">Each dot is one token. Hover a dot to read it, click to select it.</p>
+      <div class="map-wrap">
+        <svg id="map" class="map" viewBox="0 0 600 420" role="img" aria-label="Two-dimensional map of all token vectors"></svg>
+        <div id="map-tip" class="tooltip" hidden></div>
+      </div>
+      <ul class="legend" aria-label="Dot colours">
+        <li><span class="dot k-word"></span>word with a leading space (<code>·the</code>)</li>
+        <li><span class="dot k-frag"></span>word piece (<code>ing</code>)</li>
+        <li><span class="dot k-sym"></span>punctuation, digits, newline</li>
+        <li><span class="dot k-raw"></span>raw bytes</li>
+      </ul>
+      <p class="hint" id="map-var"></p>
+    </section>
+
+    <section class="panel prose" aria-labelledby="h-caveat">
+      <h2 id="h-caveat">7. What to take from this, and what not to</h2>
+      <p><strong>"Similar" means "used in similar places", not "means the same".</strong> <code>·happy</code> and
+         <code>·sad</code> can end up close because they fill the same slots in a sentence. This model trains on only about a
+         million characters of children's stories, so some neighbours are good and some are noise. Try several tokens.</p>
+      <p><strong>The map is a squeezed picture.</strong> The real vectors have many dimensions; the map keeps the two directions
+         along which the table varies most and throws the rest away. Dots that look close on the map may be far apart in
+         the full table, so trust the neighbour lists more than the picture.</p>
+      <p><strong>Position needs its own table.</strong> The model also learns an embedding for <em>where</em> a token sits in
+         the window, and adds it in. Next chapter: how tokens look at each other through attention.</p>
+    </section>
+
+    <nav class="pager" aria-label="Chapters">
+      <a href="chapter1.html">← 1. Tokens</a>
+      <a href="./">Contents</a>
+      <a href="chapter3.html">3. Attention →</a>
+    </nav>
+  </main>
+
+  <script type="module" src="chapter2.js"></script>
+  <script type="module" src="explain.js"></script>
+</body>
+</html>

@@ -1,0 +1,155 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>The Tiny Textbook: Sampling</title>
+  <link rel="icon" href="data:,">
+  <link rel="stylesheet" href="../style.css">
+  <link rel="stylesheet" href="book.css">
+</head>
+<body>
+  <header class="top book-top">
+    <p class="crumb"><a href="../">TinyLanguageBuilder</a> / <a href="./">The Tiny Textbook</a></p>
+    <h1>Chapter 5: Sampling</h1>
+    <p>A trained model never says a word. It says how likely every word is. Turning that list of chances into actual text is a
+       separate step, and the settings of that step decide whether the model plays it safe, wanders off, or repeats itself.</p>
+  </header>
+
+  <main class="book">
+    <section class="panel prose" aria-labelledby="h-pick">
+      <h2 id="h-pick">1. From chances to a choice</h2>
+      <p>After reading a prompt, the model produces one raw score per token in its vocabulary, called a <strong>logit</strong>.
+         A softmax (chapter 3) turns the scores into probabilities. To write text you pick one token, add it to the prompt, and
+         ask again. There are two obvious ways to pick:</p>
+      <ul>
+        <li><strong>Always take the favourite</strong> (<em>greedy</em>). Predictable, but it tends to get stuck repeating itself.</li>
+        <li><strong>Roll a weighted die</strong> (<em>sampling</em>). A token with a 30% chance comes up about 30% of the time. Varied, but
+            now and then it picks something silly.</li>
+      </ul>
+      <p>The dial between those two is the <strong>temperature</strong>. Before the softmax, divide every score by the temperature <em>T</em>:</p>
+      <p><span class="formula">probability &prop; e<sup>score / T</sup></span></p>
+      <p>A small <em>T</em> exaggerates the gaps between scores, so the favourite takes nearly everything (as <em>T</em> goes to 0 you
+         get greedy). A large <em>T</em> shrinks the gaps, so the chances even out (as <em>T</em> grows you approach pure noise).
+         <em>T</em> = 1 leaves the model's own probabilities untouched. A second dial, <strong>top-k</strong>, throws away
+         everything except the <em>k</em> best tokens before rolling the die, which cuts off the long tail of silly options.</p>
+    </section>
+
+    <section class="panel widget" aria-labelledby="h-train">
+      <h2 id="h-train">2. Get a model</h2>
+      <p id="status" class="status" role="status">Loading the engine…</p>
+      <div class="row">
+        <label class="field grow">Training steps
+          <select id="steps">
+            <option value="500">500 (quick look)</option>
+            <option value="1500" selected>1,500</option>
+            <option value="3000">3,000 (best)</option>
+          </select>
+        </label>
+        <button id="btn-train" class="primary" disabled>Train</button>
+      </div>
+      <progress id="progress" max="1" value="0" hidden aria-label="Training progress"></progress>
+      <p id="model-line" class="hint"></p>
+    </section>
+
+    <section class="panel widget" aria-labelledby="h-dial">
+      <h2 id="h-dial">3. Turn the dials</h2>
+      <label class="field">Prompt
+        <textarea id="text" rows="2" spellcheck="false">Once upon a time, there was a little</textarea>
+      </label>
+      <div class="row">
+        <label class="field grow">Temperature <output id="temp-out">1.00</output>
+          <input id="temp" type="range" min="0.1" max="3" step="0.05" value="1">
+        </label>
+        <label class="field grow">Top-k <output id="topk-out">all</output>
+          <input id="topk" type="range" min="1" max="41" step="1" value="41">
+        </label>
+      </div>
+      <p id="trunc-note" class="hint" hidden></p>
+      <p id="dist-line" class="latest" aria-live="polite"></p>
+      <ol id="dist" class="nn dist" aria-label="Chances for the next token"></ol>
+      <p id="stats" class="hint"></p>
+      <div class="row">
+        <button id="btn-one">Roll the die once</button>
+        <button id="btn-many">Roll 1,000 times</button>
+      </div>
+      <p id="roll-line" class="latest" aria-live="polite"></p>
+      <p class="hint">Bars are the chances after your temperature and top-k, so they always add up to 100% across <em>all</em> tokens
+         (only the best 12 are drawn). The tick on each bar appears after you roll 1,000 times, and shows how often that token
+         actually came up: it should sit close to the bar's end, which is what "weighted die" means. Slide the temperature down
+         and the favourite swallows everything; slide it up and the bars flatten. The score shown beside each token is its raw
+         logit, which never changes with temperature.</p>
+    </section>
+
+    <section class="panel widget" aria-labelledby="h-gen">
+      <h2 id="h-gen">4. Same prompt, three temperatures</h2>
+      <p>Now let the model write 60 tokens, using the prompt above, three times with the same random seed but different
+         temperatures.</p>
+      <div class="row">
+        <button id="btn-gen" class="primary" disabled>Write again (new seed)</button>
+        <span id="seed-out" class="hint"></span>
+      </div>
+      <div id="gens" class="gens">
+        <article class="gen"><h3>Cool, T = 0.3</h3><p id="gen-0" class="story"></p></article>
+        <article class="gen"><h3>Normal, T = 0.8</h3><p id="gen-1" class="story"></p></article>
+        <article class="gen"><h3>Hot, T = 1.6</h3><p id="gen-2" class="story"></p></article>
+      </div>
+      <p class="hint">Look for the pattern across several seeds. The cool text is tidy but samey and may loop. The normal text is
+         the useful middle. The hot text drifts into strange words and broken spellings, because the long tail of unlikely tokens
+         now gets picked often. The best setting depends on the job: low for facts and code, higher for brainstorming.</p>
+    </section>
+
+    <section class="panel prose" aria-labelledby="h-take">
+      <h2 id="h-take">5. What to take from this, and what not to</h2>
+      <p><strong>Training and sampling are separate.</strong> Temperature changes nothing inside the model; the same trained numbers
+         can be used cautiously or wildly. You can try different settings for free, after training.</p>
+      <p><strong>Low temperature is not "more correct".</strong> It makes the model more predictable, and a confident wrong answer is
+         just as predictable as a right one. It also makes loops more likely.</p>
+      <p><strong>This model is tiny.</strong> It has about 60,000 numbers and read a few megabytes of children's stories, so even its best
+         text wanders. Big models are built the same way, trained on vastly more text; sampling works identically on them.</p>
+      <p>That is the whole pipeline of a language model: text to tokens (1), tokens to vectors (2), vectors mixing through attention (3),
+         a loss and small steps that tune it (4), and sampling to turn its chances back into text (5). The main app builds on all
+         five, then adds fine-tuning and preference tuning to steer behaviour.</p>
+    </section>
+
+    <section class="panel prose" aria-labelledby="h-own">
+      <h2 id="h-own">6. Using it for your own purpose</h2>
+      <p>Everything above ran on a children's-story sample, but nothing about the model is specific to it. You can point the same
+         machinery at your own material, in two ways.</p>
+      <p><strong>1. Train it on your own text.</strong> In <a href="../">the main app</a>, choose <em>My own text file</em> under
+         Set up, pick a size and press Train. The model learns the vocabulary and style of that file: recipes, song lyrics,
+         product descriptions, a diary. From a terminal the same thing is
+         <code>tlm train --data mytext.txt --out runs/mine</code>. Then use <em>Continue some text</em> (chapter 5's sampling
+         under the hood) or <code>tlm generate</code>.</p>
+      <p><strong>2. Teach it a task with your own examples.</strong> Under <em>Teach it a task</em>, choose <em>My own examples</em> and
+         give it a <strong>.jsonl</strong> file: one example per line, each with a <code>prompt</code> and the
+         <code>response</code> you want. The page has a sample file to start from. Fine-tuning then uses exactly the loop from
+         chapter 4, but measures the loss only on your responses. A tenth of your examples is held back and never trained on, so
+         the page can show you your answer next to the model's.</p>
+      <p>The same two steps work from the command line: <code>tlm sft --data examples.jsonl</code>.</p>
+      <h3>What to expect</h3>
+      <ul>
+        <li><strong>Style yes, accuracy no.</strong> A model with tens of thousands of numbers and a 64-token window can pick up the
+            look of your text and a fixed answer format. It cannot be relied on for facts or long reasoning.</li>
+        <li><strong>Watch the held-out loss.</strong> With only a few dozen examples the model memorises them within a hundred steps:
+            training loss falls toward zero while held-out loss rises. In a test with about 100 plural examples ("Plural of lamp:"
+            gives "lamps"), the small model learned the answer shape and some words but still got unseen words wrong. A few hundred
+            examples of one narrow task, and fewer steps, give it a better chance of learning the pattern.</li>
+        <li><strong>Your own examples are not machine-checked.</strong> Preference tuning (DPO) needs a rule that says which answers are
+            good, so the app offers it only for the built-in word task. For your own examples you judge the results by reading them.</li>
+        <li><strong>It stays on your computer.</strong> The text, the training and the model all live in your browser tab or your own
+            machine. You can download the model files and open them again later.</li>
+      </ul>
+      <p>That is the point of a tiny model: it is small enough that you can see, and change, every step of how it learns.</p>
+    </section>
+
+    <nav class="pager" aria-label="Chapters">
+      <a href="chapter4.html">← 4. Learning</a>
+      <a href="./">Contents</a>
+    </nav>
+  </main>
+
+  <script type="module" src="chapter5.js"></script>
+  <script type="module" src="explain.js"></script>
+</body>
+</html>

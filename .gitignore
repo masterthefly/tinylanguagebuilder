@@ -1,0 +1,9 @@
+/target
+/data
+/runs
+/web/pkg
+/web/data
+/textbook-*.png
+/e2e-*.png
+node_modules/
+package-lock.json

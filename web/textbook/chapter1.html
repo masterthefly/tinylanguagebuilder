@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>The Tiny Textbook: Tokens</title>
+  <link rel="icon" href="data:,">
+  <link rel="stylesheet" href="../style.css">
+  <link rel="stylesheet" href="book.css">
+</head>
+<body>
+  <header class="top book-top">
+    <p class="crumb"><a href="../">TinyLanguageBuilder</a> / <a href="./">The Tiny Textbook</a></p>
+    <h1>Chapter 1: Tokens</h1>
+    <p>A language model never sees letters or words. It sees a list of numbers. This chapter shows how text becomes
+       those numbers, using the same tokenizer code that trains the real model.</p>
+  </header>
+
+  <main class="book">
+    <section class="panel prose" aria-labelledby="h-bytes">
+      <h2 id="h-bytes">1. Everything is bytes</h2>
+      <p>A computer stores text as <em>bytes</em>: numbers from 0 to 255. The letter <code>a</code> is 97, a space is 32,
+         and an emoji takes four bytes. The simplest tokenizer gives every byte its own token, so the model's
+         vocabulary is just 256 entries and <strong>any text at all</strong> can be written down. There is no
+         "unknown word".</p>
+      <p>The cost is length. A sentence of 40 letters becomes 40 tokens, and a model reads a fixed number of tokens at
+         a time, so short tokens waste its attention on spelling. Try it: type below with the slider all the way to the left.</p>
+    </section>
+
+    <section class="panel widget" aria-labelledby="h-play">
+      <h2 id="h-play">2. Tokenizer playground</h2>
+      <p id="lab-status" class="status" role="status">Loading the engine and learning merges from the story sample…</p>
+
+      <label class="field">Your text
+        <textarea id="text" rows="3" spellcheck="false">Once upon a time, a little girl named Lily found a shiny red ball in the garden.</textarea>
+      </label>
+
+      <label class="field">Merges allowed: <output id="k-out">0</output>
+        <input id="k" type="range" min="0" max="0" value="0" step="1" disabled>
+      </label>
+      <p class="hint">Vocabulary size is 256 + merges. The real small model uses 512 (256 merges); the medium one uses 1024.</p>
+
+      <h3>The text, cut into tokens <span class="hint">(each coloured chip is one token)</span></h3>
+      <div id="chips" class="chips" aria-live="polite"></div>
+
+      <dl class="stats">
+        <div><dt>Bytes of text</dt><dd id="s-bytes">0</dd></div>
+        <div><dt>Tokens</dt><dd id="s-tokens">0</dd></div>
+        <div><dt>Bytes per token</dt><dd id="s-ratio">0</dd></div>
+        <div><dt>Vocabulary</dt><dd id="s-vocab">256</dd></div>
+      </dl>
+
+      <h3>The token numbers the model would actually see</h3>
+      <p id="ids" class="ids"></p>
+      <p id="roundtrip" class="hint"></p>
+    </section>
+
+    <section class="panel prose" aria-labelledby="h-bpe">
+      <h2 id="h-bpe">3. Byte-pair encoding: learning to merge</h2>
+      <p>To shorten the token list, we let the tokenizer <em>learn</em> from text. It looks for the pair of neighbouring
+         tokens that appears most often, glues them into one new token, and repeats. Early merges are common letter
+         pairs (<code>h</code> + <code>e</code> becomes <code>he</code>); later ones build up pieces and whole words
+         such as <code>·the</code> (the dot stands for a space). Each merge is one step of the slider above.</p>
+      <p>Merges are applied in the order they were learned, which is why shrinking the vocabulary is the same as keeping
+         only the first merges. The widget below shows the most recent merge the slider has reached, and the whole recipe.</p>
+    </section>
+
+    <section class="panel widget" aria-labelledby="h-recipe">
+      <h2 id="h-recipe">4. The merge recipe</h2>
+      <p id="latest" class="latest" aria-live="polite">Move the slider to learn the first merge.</p>
+      <div class="table-wrap">
+        <table class="merge-table">
+          <thead><tr><th scope="col">Merge #</th><th scope="col">Token id</th><th scope="col">Glues together</th><th scope="col">Result</th></tr></thead>
+          <tbody id="recipe"></tbody>
+        </table>
+      </div>
+      <p class="hint">Rows beyond the slider are dimmed: the tokenizer has not "learned" them yet in the playground.</p>
+    </section>
+
+    <section class="panel prose" aria-labelledby="h-why">
+      <h2 id="h-why">5. Why not just use words?</h2>
+      <p>Whole words need a huge vocabulary and fail on names, typos and new words. Single bytes never fail but make
+         sequences long. Byte-pair encoding sits in between: common words become one token, rare words are spelled
+         from pieces, and nothing is ever unknown. Drag the slider to 256 merges (the small model's setting) and
+         compare bytes per token with the slider at 0: every extra byte a token covers lets the model's fixed
+         64-token window see more text.</p>
+      <p><strong>Try it:</strong> paste a word that is not English, or an emoji, and watch it fall back to single bytes
+         (shown as <code>\xNN</code>). Next chapter: turning these token numbers into vectors the model can learn from.</p>
+    </section>
+
+    <nav class="pager" aria-label="Chapters">
+      <a href="./">Contents</a>
+      <a href="chapter2.html">2. Embeddings →</a>
+    </nav>
+  </main>
+
+  <script type="module" src="chapter1.js"></script>
+  <script type="module" src="explain.js"></script>
+</body>
+</html>

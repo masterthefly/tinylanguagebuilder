@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>The Tiny Textbook</title>
+  <link rel="icon" href="data:,">
+  <link rel="stylesheet" href="../style.css">
+  <link rel="stylesheet" href="book.css">
+</head>
+<body>
+  <header class="top book-top">
+    <p class="crumb"><a href="../">TinyLanguageBuilder</a> / The Tiny Textbook</p>
+    <h1>The Tiny Textbook</h1>
+    <p>How a language model works, one idea at a time. Every widget runs the real engine (the same Rust code that trains
+       the model in this project) in your browser, so what you play with is not a mock-up. No GPU, no server, no account.</p>
+  </header>
+  <main class="book">
+    <ol class="toc">
+      <li><a href="chapter1.html">1. Tokens</a>
+        <p>Text becomes numbers. Cut your own text into tokens and watch byte-pair encoding learn its merges.</p></li>
+      <li><a href="chapter2.html">2. Embeddings</a>
+        <p>Train a tiny model and watch each token's vector change from random noise into something meaningful.</p></li>
+      <li><a href="chapter3.html">3. Attention</a>
+        <p>Open up the real attention layers: who looks at whom, step by step, before and after training.</p></li>
+      <li><a href="chapter4.html">4. Learning</a>
+        <p>Loss, gradient descent and a model improving in front of you: watch the loss fall and see what the model expected.</p></li>
+      <li><a href="chapter5.html">5. Sampling</a>
+        <p>Temperature and top-k: turn the model's chances into words, and compare cool, normal and hot writing.</p></li>
+    </ol>
+  </main>
+  <script type="module" src="explain.js"></script>
+</body>
+</html>

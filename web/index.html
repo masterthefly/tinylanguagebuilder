@@ -1,0 +1,244 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>TinyLanguageBuilder</title>
+  <link rel="icon" href="data:,">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="top">
+    <h1>TinyLanguageBuilder</h1>
+    <p>Build a small language model right here, on your own CPU: pre-train it, teach it a task, and chat with it.
+       No GPU, no server, no account. Your text never leaves this browser tab.</p>
+    <p class="hint">New to this? Read <a href="textbook/">The Tiny Textbook</a>: interactive lessons on tokens, embeddings and more.</p>
+  </header>
+
+  <div id="resume-banner" class="banner" role="region" aria-label="Saved session" hidden>
+    <p id="resume-text"></p>
+    <div class="buttons">
+      <button id="btn-resume" class="primary">Resume</button>
+      <button id="btn-discard">Discard</button>
+    </div>
+  </div>
+
+  <main class="layout">
+    <div class="col">
+      <section class="panel controls" aria-labelledby="h-setup">
+        <h2 id="h-setup">1. Set up</h2>
+
+        <fieldset>
+          <legend>Training text</legend>
+          <label class="choice"><input type="radio" name="source" value="sample" checked>
+            Sample: TinyStories <span class="hint">(8 MB of simple children's stories)</span></label>
+          <label class="choice"><input type="radio" name="source" value="file">
+            My own text file</label>
+          <input id="file" type="file" accept=".txt,text/plain" hidden>
+          <p id="file-name" class="hint" hidden></p>
+        </fieldset>
+
+        <label class="field">Model size
+          <select id="preset">
+            <option value="tiny">Tiny: 59k parameters, fastest</option>
+            <option value="small" selected>Small: 169k parameters</option>
+            <option value="medium">Medium: 1.1M parameters, best quality, slow</option>
+          </select>
+        </label>
+
+        <div class="row">
+          <label class="field grow">Training steps
+            <input id="steps" type="number" min="100" max="100000" step="100" value="3000">
+          </label>
+          <label class="field grow">Workers
+            <select id="workers"></select>
+          </label>
+        </div>
+        <p id="preset-hint" class="hint"></p>
+
+        <div class="buttons">
+          <button id="btn-load" class="primary">Prepare model</button>
+          <button id="btn-train" disabled>Train</button>
+          <button id="btn-pause" disabled>Pause</button>
+        </div>
+        <p id="status" class="status" role="status" aria-live="polite">Pick your settings, then press <b>Prepare model</b>.</p>
+        <p class="save-line"><span id="save-status" class="hint">Progress is saved in this browser automatically.</span>
+          <button id="btn-save" class="link" disabled>Save now</button></p>
+      </section>
+
+      <section class="panel finetune" aria-labelledby="h-ft">
+        <h2 id="h-ft">3. Teach it a task</h2>
+        <p class="hint">Pre-training teaches a model to <em>continue</em> text. Fine-tuning shows it examples of
+          an instruction and a good answer, so it learns to <em>follow</em> it. Use the built-in task
+          (<b>write a sentence that uses a given word</b>), or teach it your own examples.</p>
+        <fieldset class="source">
+          <legend>Examples to learn from</legend>
+          <label class="choice"><input type="radio" name="ft-source" value="word" checked>
+            Built-in: write a sentence using a word <span class="hint">(scored automatically)</span></label>
+          <label class="choice"><input type="radio" name="ft-source" value="file">
+            My own examples <span class="hint">(a .jsonl file)</span></label>
+          <div id="ft-custom" hidden>
+            <input id="ft-file" type="file" accept=".jsonl,.json,.txt,text/plain" aria-describedby="ft-file-note">
+            <p id="ft-file-note" class="hint">Choose a file with one example per line.</p>
+            <details class="format">
+              <summary>What goes in the file?</summary>
+              <p>One JSON object per line, with a <code>prompt</code> and the <code>response</code> you want back:</p>
+              <pre class="code">{"prompt": "Opposite of hot:", "response": " cold"}
+{"prompt": "Opposite of up:", "response": " down"}</pre>
+              <p>The model is later asked exactly the prompt you type, so put any layout (such as <code>Q:</code> and
+                 <code>A:</code>) in the prompt, and start each response with a space. You need at least 20 lines (about 10%
+                 are held back for scoring) and each prompt plus response must fit in the model's 64-token window, roughly
+                 40 words. A few hundred examples of one narrow task work best; this is a very small model.</p>
+              <button id="btn-sample-jsonl" type="button" class="link">Download a sample file (40 opposites)</button>
+            </details>
+          </div>
+        </fieldset>
+        <label class="field">Fine-tuning steps
+          <input id="ft-steps" type="number" min="100" max="100000" step="100" value="1500">
+        </label>
+        <div class="buttons">
+          <button id="btn-ft" disabled>Start fine-tuning</button>
+        </div>
+        <p id="ft-hint" class="hint">Available once the model has been trained a while.</p>
+        <table id="ft-table" class="ft-table" hidden>
+          <caption class="sr">Fine-tuning results on held-out questions</caption>
+          <thead><tr><th scope="col"></th><th scope="col">Before</th><th scope="col">After</th></tr></thead>
+          <tbody>
+            <tr><th scope="row" id="ft-row-word">Uses the requested word</th><td id="ft-before-word">–</td><td id="ft-after-word">–</td></tr>
+            <tr id="ft-row-chance"><th scope="row">Control: another question's word</th><td id="ft-before-chance">–</td><td id="ft-after-chance">–</td></tr>
+            <tr><th scope="row" id="ft-row-stops">Finishes its sentence</th><td id="ft-before-stops">–</td><td id="ft-after-stops">–</td></tr>
+          </tbody>
+        </table>
+        <p id="ft-note" class="hint" hidden></p>
+        <div id="ft-compare" hidden>
+          <h3 id="ft-compare-title">Held-out examples: your answer and the model's</h3>
+          <ol id="ft-compare-list" class="compare"></ol>
+        </div>
+      </section>
+
+      <section class="panel dpo" aria-labelledby="h-dpo">
+        <h2 id="h-dpo">4. Learn from preferences</h2>
+        <p class="hint">Fine-tuning shows the model good answers, but never what to avoid. Here the model writes several
+          answers per prompt, a checker marks which use the word <em>and</em> finish properly, and it is trained to
+          prefer the good ones over the bad ones (DPO).</p>
+        <div class="row">
+          <label class="field grow">Prompts
+            <input id="dpo-prompts" type="number" min="100" max="5000" step="100" value="1500">
+          </label>
+          <label class="field grow">Training steps
+            <input id="dpo-steps" type="number" min="50" max="10000" step="50" value="300">
+          </label>
+        </div>
+        <div class="buttons">
+          <button id="btn-dpo" disabled>Start preference tuning</button>
+        </div>
+        <p id="dpo-hint" class="hint">Available once fine-tuning has finished.</p>
+        <table id="dpo-table" class="ft-table" hidden>
+          <caption class="sr">Preference tuning results on held-out questions</caption>
+          <thead><tr><th scope="col"></th><th scope="col">Before</th><th scope="col">After</th></tr></thead>
+          <tbody>
+            <tr><th scope="row">Uses the requested word</th><td id="dpo-before-word">–</td><td id="dpo-after-word">–</td></tr>
+            <tr><th scope="row">Control: another question's word</th><td id="dpo-before-chance">–</td><td id="dpo-after-chance">–</td></tr>
+            <tr><th scope="row">Finishes its sentence</th><td id="dpo-before-stops">–</td><td id="dpo-after-stops">–</td></tr>
+          </tbody>
+        </table>
+        <p id="dpo-note" class="hint" hidden></p>
+      </section>
+    </div>
+
+    <section class="panel results" aria-labelledby="h-progress">
+      <h2 id="h-progress">2. Watch it learn</h2>
+
+      <div class="tabs" role="tablist" aria-label="Training phase">
+        <button role="tab" id="tab-pretrain" aria-selected="true" aria-controls="chart-wrap">Pre-training</button>
+        <button role="tab" id="tab-finetune" aria-selected="false" aria-controls="chart-wrap" disabled>Fine-tuning</button>
+        <button role="tab" id="tab-dpo" aria-selected="false" aria-controls="chart-wrap" disabled>Preferences</button>
+      </div>
+
+      <dl class="stats">
+        <div><dt>Step</dt><dd id="s-step">0</dd></div>
+        <div><dt id="s-train-label">Train loss</dt><dd id="s-train">–</dd></div>
+        <div><dt id="s-val-label">Validation loss</dt><dd id="s-val">–</dd></div>
+        <div><dt>Speed</dt><dd id="s-speed">–</dd></div>
+      </dl>
+      <p id="units" class="hint units">Loss is in bits per byte of text: lower is better, 8 means no idea at all.</p>
+
+      <div class="chart-head">
+        <ul class="legend" aria-label="Chart legend">
+          <li><span class="swatch s1"></span><span id="legend-train">Train (smoothed)</span></li>
+          <li><span class="swatch s2"></span>Validation</li>
+        </ul>
+        <button id="btn-table" class="link" aria-pressed="false">Show as table</button>
+      </div>
+
+      <div id="chart-wrap" class="chart-wrap">
+        <svg id="chart" viewBox="0 0 720 310" role="img"
+             aria-label="Line chart of training and validation loss against training step"></svg>
+        <div id="tooltip" class="tooltip" hidden></div>
+      </div>
+      <div id="table-wrap" class="table-wrap" hidden>
+        <table id="table">
+          <caption class="sr">Loss at each evaluation</caption>
+          <thead><tr><th scope="col">Step</th><th scope="col">Train</th><th scope="col">Validation</th></tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+
+      <h3>What the model writes while it trains</h3>
+      <ol id="samples" class="samples" reversed>
+        <li class="empty">Samples appear here as training progresses.</li>
+      </ol>
+    </section>
+
+    <section class="panel talk" aria-labelledby="h-talk">
+      <h2 id="h-talk">5. Try it</h2>
+      <div class="two">
+        <div>
+          <h3 class="first">Continue some text</h3>
+          <p class="hint">A pre-trained model continues whatever you start.</p>
+          <label class="field">Start of a story
+            <input id="prompt" type="text" value="Once upon a time" maxlength="300">
+          </label>
+          <div class="row">
+            <label class="field grow">Temperature <output id="temp-out">0.8</output>
+              <input id="temp" type="range" min="0.2" max="1.5" step="0.1" value="0.8">
+            </label>
+            <button id="btn-gen" disabled>Continue</button>
+          </div>
+          <pre id="output" class="output" aria-live="polite">–</pre>
+        </div>
+        <div>
+          <h3 class="first">Ask the fine-tuned model</h3>
+          <p id="ask-hint" class="hint">Fine-tune the model first, then type a word and it writes a sentence using it.</p>
+          <div class="row">
+            <label class="field grow"><span id="ask-label">A word</span>
+              <textarea id="ask-word" rows="1" maxlength="300" spellcheck="false">dragon</textarea>
+            </label>
+            <button id="btn-ask" disabled>Ask</button>
+          </div>
+          <ol id="answers" class="answers" aria-live="polite"><li class="empty">–</li></ol>
+        </div>
+      </div>
+
+      <h3>Save or share the model</h3>
+      <div class="buttons">
+        <button id="btn-dl-model" disabled>Download model.safetensors</button>
+        <button id="btn-dl-tok" disabled>Download tokenizer.json</button>
+        <button id="btn-dl-sft" disabled>Download sft.json</button>
+      </div>
+      <p class="hint">Put the files in one folder and the command-line tool can use them:
+        <code>tlm chat --model folder --input "dragon"</code></p>
+
+      <h3>Open a model from files</h3>
+      <p class="hint">Choose <code>model.safetensors</code> and <code>tokenizer.json</code> (and <code>sft.json</code> to ask it
+        questions). Models made by the <code>tlm</code> command-line tool work too. An opened model can generate text but not train.</p>
+      <div class="row">
+        <input id="open-files" type="file" multiple accept=".safetensors,.json">
+        <button id="btn-open">Open</button>
+      </div>
+    </section>
+  </main>
+
+  <script type="module" src="app.js"></script>
+</body>
+</html>

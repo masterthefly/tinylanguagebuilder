@@ -1,0 +1,4 @@
+# WebAssembly SIMD (128-bit vectors) is supported by every current browser.
+# It lets the compiler vectorize our matrix kernel in the browser, like AVX2 does natively.
+[target.wasm32-unknown-unknown]
+rustflags = ["-C", "target-feature=+simd128"]

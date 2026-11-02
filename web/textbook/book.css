@@ -1,0 +1,194 @@
+/* Textbook styles. Colours come from the tokens defined in ../style.css. */
+.crumb { margin: 0 0 4px; font-size: 13px; color: var(--muted); }
+.crumb a { color: var(--text-2); }
+
+.book, .book-top { max-width: 760px; margin: 0 auto; padding: 8px 16px 48px; display: grid; gap: 16px; }
+.prose p { margin: 0 0 12px; max-width: 68ch; }
+.prose p:last-child, .widget > p:last-child { margin-bottom: 0; }
+.widget textarea {
+  display: block; width: 100%; margin-top: 4px; font: inherit; font-weight: 400; resize: vertical;
+  color: var(--text); background: var(--page); border: 1px solid var(--axis); border-radius: 8px; padding: 8px 10px;
+}
+:is(textarea):focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+
+/* Token chips: three tints so neighbours are distinguishable without relying on hue alone
+   (each chip also has a thin edge). Colours mix existing tokens, so dark mode follows. */
+.chips { display: flex; flex-wrap: wrap; gap: 3px; margin: 4px 0 16px; line-height: 1.2; }
+.chip {
+  font: 14px/1.3 ui-monospace, "Cascadia Mono", Consolas, monospace;
+  padding: 2px 5px; border-radius: 4px; white-space: pre; color: var(--text);
+  border: 1px solid var(--axis); background: var(--page);
+}
+.chip.c0 { background: color-mix(in srgb, var(--series-1) 20%, var(--surface)); }
+.chip.c1 { background: color-mix(in srgb, var(--series-2) 20%, var(--surface)); }
+.chip.c2 { background: color-mix(in srgb, var(--text-2) 14%, var(--surface)); }
+.chip.raw { border-style: dashed; }
+.chips .empty { color: var(--muted); }
+
+.ids { margin: 0; font: 13px/1.6 ui-monospace, "Cascadia Mono", Consolas, monospace; overflow-wrap: anywhere; color: var(--text-2); }
+.latest { margin: 0 0 12px; font-size: 16px; }
+.latest .chip { font-size: 15px; }
+
+.merge-table { font-size: 14px; }
+.merge-table td { font-family: ui-monospace, "Cascadia Mono", Consolas, monospace; }
+.merge-table tr.future { opacity: 0.4; }
+.merge-table tr.current td { background: color-mix(in srgb, var(--accent) 14%, var(--surface)); }
+.merge-table td:nth-child(n+3), .merge-table th:nth-child(n+3) { text-align: left; }
+.merge-table td { white-space: pre; }
+
+.top.book-top { padding: 28px 16px 8px; }
+@media (max-width: 500px) { .merge-table th, .merge-table td { padding: 6px 6px; } .merge-table { font-size: 13px; } }
+
+/* ---- navigation ---- */
+.pager { display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; padding: 4px 2px; }
+.pager a { color: var(--text-2); }
+.toc { list-style: none; margin: 0; padding: 0; display: grid; gap: 12px; }
+.toc li { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 14px 16px; }
+.toc a { font-weight: 600; font-size: 17px; color: var(--text); }
+.toc p { margin: 4px 0 0; color: var(--text-2); }
+.toc .soon { opacity: 0.6; }
+.toc .soon span { font-weight: 600; font-size: 17px; }
+
+/* ---- chapter 2 ---- */
+progress { width: 100%; height: 8px; margin: 4px 0 8px; accent-color: var(--accent); }
+.chip-btn { border: 0; background: none; padding: 0; cursor: pointer; border-radius: 4px; }
+.chip-btn:hover .chip { border-color: var(--accent); }
+.probes { margin: 8px 0 4px; }
+
+.vec { width: 100%; height: auto; display: block; }
+.vec .axis { stroke: var(--axis); stroke-width: 1; }
+.vec .pos { fill: var(--series-1); }
+.vec .neg { fill: var(--series-2); }
+
+.nn { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; }
+.nn li { display: grid; grid-template-columns: minmax(70px, auto) 1fr 40px; align-items: center; gap: 8px; padding: 2px 4px; border-radius: 6px; cursor: pointer; }
+.nn li:hover, .nn li:focus-visible { background: var(--page); outline: none; }
+.nn .sim { height: 6px; background: var(--grid); border-radius: 3px; overflow: hidden; }
+.nn .sim span { display: block; height: 100%; background: var(--series-1); }
+.nn .num { text-align: right; font-variant-numeric: tabular-nums; color: var(--text-2); font-size: 13px; }
+
+.map-wrap { position: relative; }
+.map { width: 100%; height: auto; display: block; touch-action: pan-y; }
+.map .frame { fill: var(--page); stroke: var(--border); }
+.map .pt { stroke: var(--surface); stroke-width: 0.8; cursor: pointer; }
+.k-word { fill: var(--series-1); }
+.k-frag { fill: var(--muted); }
+.k-sym { fill: var(--series-2); }
+.k-raw { fill: var(--axis); }
+.map .pt.nn { stroke: var(--text); stroke-width: 1.5; }
+.map .pt.sel { stroke: var(--text); stroke-width: 2.5; }
+.map .lab { fill: var(--text-2); font-size: 11px; font-family: ui-monospace, "Cascadia Mono", Consolas, monospace; pointer-events: none; paint-order: stroke; stroke: var(--page); stroke-width: 3px; }
+.map .lab.sel { fill: var(--text); font-weight: 700; }
+.legend { display: flex; flex-wrap: wrap; gap: 6px 16px; list-style: none; margin: 10px 0 0; padding: 0; font-size: 13px; color: var(--text-2); }
+.legend .dot { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 6px; }
+.legend .dot.k-word { background: var(--series-1); }
+.legend .dot.k-frag { background: var(--muted); }
+.legend .dot.k-sym { background: var(--series-2); }
+.legend .dot.k-raw { background: var(--axis); }
+
+/* ---- chapter 3 ---- */
+.which { border: 0; padding: 0; margin: 8px 0 4px; }
+.which legend { font-weight: 600; margin-bottom: 2px; }
+.heat-wrap { overflow-x: auto; margin: 8px 0; }
+.heat { width: 100%; height: auto; display: block; margin: 0 auto; }
+.heat .cellw { fill: var(--series-1); }
+.heat .masked { fill: var(--grid); fill-opacity: 0.5; }
+.heat .hit { fill: transparent; cursor: pointer; }
+.heat g.row:hover .cellw { stroke: var(--text-2); stroke-width: 0.6; }
+.heat .outline { fill: none; stroke: var(--text); stroke-width: 1.6; pointer-events: none; }
+.heat .ylab, .heat .xlab { font: 11px ui-monospace, "Cascadia Mono", Consolas, monospace; fill: var(--text-2); pointer-events: none; white-space: pre; }
+.heat g.row.sel .ylab { fill: var(--text); font-weight: 700; }
+.swatch-scale, .swatch-mask { display: inline-block; width: 28px; height: 10px; border-radius: 2px; margin-right: 6px; vertical-align: middle; border: 1px solid var(--border); }
+.swatch-scale { background: linear-gradient(90deg, color-mix(in srgb, var(--series-1) 6%, var(--surface)), var(--series-1)); }
+.swatch-mask { background: color-mix(in srgb, var(--grid) 50%, var(--surface)); }
+.score-table td, .score-table th { text-align: right; }
+.score-table th:first-child, .score-table td:first-child { text-align: left; }
+.score-table td:first-child { font-family: inherit; }
+.score-table tr.self td { background: color-mix(in srgb, var(--accent) 10%, var(--surface)); }
+.score-table tfoot th, .score-table tfoot td { border-top: 2px solid var(--axis); font-weight: 600; }
+.score-table .barcell { width: 28%; padding-right: 10px; }
+.score-table .barcell span { display: block; height: 8px; background: var(--series-1); border-radius: 2px; min-width: 1px; }
+.heads-table td { text-align: right; font-family: inherit; }
+.heads-table td:first-child, .heads-table th:first-child { text-align: left; }
+.heads-table th:nth-child(n+2) { text-align: right; }
+.heads-table tr.current td { background: color-mix(in srgb, var(--accent) 14%, var(--surface)); }
+
+/* Number columns of the chapter 3 tables: right-aligned (beats the generic merge-table rule above). */
+.merge-table.score-table th:nth-child(n+2), .merge-table.score-table td:nth-child(n+2),
+.merge-table.heads-table th:nth-child(n+2), .merge-table.heads-table td:nth-child(n+2) { text-align: right; }
+.merge-table.score-table td:first-child, .merge-table.heads-table td:first-child { font-family: inherit; }
+/* A heat map is only readable at full size: on a narrow screen let it scroll sideways instead of shrinking. */
+.heat { min-width: 560px; }
+
+/* ---- chapter 4 ---- */
+.formula { font: 17px/1.4 ui-monospace, "Cascadia Mono", Consolas, monospace; background: var(--page); border: 1px solid var(--border); border-radius: 8px; padding: 8px 12px; display: inline-block; }
+.merge-table.loss-table th:last-child, .merge-table.loss-table td:last-child { text-align: right; }
+.merge-table.loss-table td:first-child { font-family: inherit; }
+.toy, .curve { width: 100%; height: auto; display: block; margin: 8px 0; }
+.toy .bowl { fill: none; stroke: var(--text-2); stroke-width: 2; stroke-linejoin: round; }
+.toy .trail { fill: none; stroke: var(--series-2); stroke-width: 1.5; stroke-dasharray: 3 3; }
+.toy .ball { fill: var(--series-1); stroke: var(--surface); stroke-width: 2; }
+.toy .best { stroke: var(--axis); stroke-dasharray: 4 4; }
+.toy .tick, .curve .tick { font: 11px ui-monospace, "Cascadia Mono", Consolas, monospace; fill: var(--muted); }
+.curve .frame, .toy .frame { fill: var(--page); stroke: var(--border); }
+.curve .gridl { stroke: var(--grid); }
+.curve .floor { stroke: var(--muted); stroke-dasharray: 5 4; }
+.curve .train { fill: none; stroke: var(--series-2); stroke-width: 1; opacity: 0.8; stroke-linejoin: round; }
+.curve .val { fill: none; stroke: var(--series-1); stroke-width: 2.2; stroke-linejoin: round; }
+.curve .valpt { fill: var(--series-1); }
+.curve .mark { stroke: var(--text); stroke-width: 1.5; }
+.legend .dot.cur-train { background: var(--series-2); }
+.legend .dot.cur-val { background: var(--series-1); }
+.legend .dash { display: inline-block; width: 18px; border-top: 2px dashed var(--muted); margin-right: 6px; vertical-align: middle; }
+.surprise { display: flex; flex-wrap: wrap; gap: 3px; margin: 8px 0 12px; line-height: 1.2; }
+.surprise button {
+  font: 14px/1.3 ui-monospace, "Cascadia Mono", Consolas, monospace; white-space: pre; color: var(--text);
+  padding: 3px 5px; border-radius: 4px; border: 1px solid var(--axis); cursor: pointer;
+  background: color-mix(in srgb, var(--series-1) calc(var(--s, 0) * 70% + 4%), var(--surface));
+}
+.surprise button[aria-pressed="true"] { outline: 2px solid var(--text); outline-offset: 1px; }
+.surprise button:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+.guesses li { grid-template-columns: minmax(70px, auto) 1fr 64px; cursor: default; }
+.guesses li.actual { background: color-mix(in srgb, var(--accent) 14%, var(--surface)); }
+.guesses .tag { font-size: 12px; color: var(--text-2); margin-left: 6px; }
+h3.latest { font-size: 16px; font-weight: 400; margin: 12px 0 6px; }
+
+/* ---- chapter 5 ---- */
+.dist li { grid-template-columns: minmax(70px, auto) 1fr 52px; cursor: default; }
+.dist .sim { position: relative; height: 8px; overflow: visible; }
+.dist .sim > span { border-radius: 4px; }
+.dist .tick-obs { position: absolute; top: -4px; width: 3px; height: 16px; margin-left: -1px; background: var(--text); border-radius: 1px; }
+.gens { display: grid; gap: 12px; margin-top: 8px; }
+.gen { border: 1px solid var(--border); border-radius: 10px; padding: 10px 12px; background: var(--page); }
+.gen h3 { margin: 0 0 4px; font-size: 14px; color: var(--text-2); }
+.gen .story { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; min-height: 3em; }
+
+/* ---- "Explain" popover (explain.js) ---- */
+.explain-btn { position: fixed; z-index: 50; padding: 6px 12px; border-radius: 999px; font-size: 14px; box-shadow: 0 2px 10px rgb(0 0 0 / 0.25); }
+.explain-btn[hidden], .explain-panel[hidden] { display: none; }
+.explain-panel {
+  position: fixed; z-index: 60; right: 16px; bottom: 16px; width: min(420px, calc(100vw - 32px)); max-height: min(70vh, 560px);
+  overflow-y: auto; background: var(--surface); color: var(--text); border: 1px solid var(--border); border-radius: 12px;
+  box-shadow: 0 8px 30px rgb(0 0 0 / 0.3); padding: 14px 16px; outline: none;
+}
+@media (max-width: 560px) { .explain-panel { right: 8px; left: 8px; bottom: 8px; width: auto; max-height: 62vh; } }
+.explain-head { display: flex; justify-content: space-between; gap: 12px; align-items: flex-start; }
+.explain-kicker { margin: 0; font-size: 12px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--muted); }
+.explain-quote { margin: 2px 0 4px; padding: 0 0 0 10px; border-left: 3px solid var(--accent); font-style: italic; overflow-wrap: anywhere; }
+.explain-quote-plain { margin: 2px 0 0; font-weight: 600; }
+.explain-where { margin: 0; font-size: 13px; color: var(--text-2); }
+.explain-close { border: 0; background: none; font-size: 24px; line-height: 1; padding: 0 4px; cursor: pointer; color: var(--text-2); }
+.explain-close:focus-visible, .explain-chip:focus-visible, .explain-all summary:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+.explain-body { margin-top: 10px; display: grid; gap: 10px; }
+.explain-lead { margin: 0; font-size: 13px; color: var(--text-2); }
+.explain-none { margin: 0; color: var(--text-2); }
+.explain-card { background: var(--page); border: 1px solid var(--border); border-radius: 10px; padding: 10px 12px; }
+.explain-card.secondary { opacity: 0.92; }
+.explain-card h3 { margin: 0 0 4px; font-size: 16px; }
+.explain-card p { margin: 0 0 6px; }
+.explain-card .explain-more { color: var(--text-2); font-size: 14px; }
+.explain-chapter { font-size: 13px; color: var(--text-2); }
+.explain-related { font-size: 13px; color: var(--text-2); display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.explain-chip { font: inherit; font-size: 13px; padding: 2px 8px; border-radius: 999px; border: 1px solid var(--axis); background: var(--surface); color: var(--text); cursor: pointer; }
+.explain-chip:hover { border-color: var(--accent); }
+.explain-all summary { cursor: pointer; font-size: 13px; color: var(--text-2); margin-bottom: 6px; }
