@@ -1,0 +1,65 @@
+name: Bug report
+description: Something is broken, wrong or crashes
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time. A clear report is half the fix. Please search existing issues first.
+  - type: dropdown
+    id: where
+    attributes:
+      label: Where did it happen?
+      options:
+        - The app (the main page)
+        - The textbook (which chapter, below)
+        - The command-line tool (tlm)
+        - Building or running the tests
+        - Somewhere else
+    validations:
+      required: true
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened?
+      description: What did you see? Include any error message exactly as shown.
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: What did you expect instead?
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      description: The settings you chose (model size, steps, workers, your own text or examples file) and what you pressed, in order.
+      placeholder: |
+        1. Open the app and choose the Small model with 4 workers
+        2. ...
+    validations:
+      required: true
+  - type: input
+    id: environment
+    attributes:
+      label: Browser and operating system
+      description: For example "Chrome 130 on Windows 11". The app has only been tested on Chromium so far.
+    validations:
+      required: false
+  - type: textarea
+    id: console
+    attributes:
+      label: Console output
+      description: In the browser, open the developer tools (F12) and look at the Console tab. Paste anything in red.
+      render: text
+    validations:
+      required: false
+  - type: textarea
+    id: extra
+    attributes:
+      label: Anything else?
+      description: Screenshots are very helpful. Please do not attach private text.
+    validations:
+      required: false

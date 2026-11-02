@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Read the interactive textbook
+    url: https://masterthefly.github.io/tinylanguagebuilder/textbook/
+    about: Five short chapters on tokens, embeddings, attention, learning and sampling, with live widgets.
+  - name: Contributing guide
+    url: https://github.com/masterthefly/tinylanguagebuilder/blob/main/CONTRIBUTING.md
+    about: How to build the project, run the tests and propose a change.

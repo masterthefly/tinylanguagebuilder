@@ -168,6 +168,12 @@ node scripts/run-e2e.mjs http://localhost:8080/ scripts/e2e-web.mjs
 - Results are exact on one machine but not bit-identical across different CPUs.
 - The `tlm` CLI has no unit tests of its own.
 
+## Contributing
+
+Bug reports, confusing explanations, textbook improvements, glossary entries and experiments are all welcome. See
+[CONTRIBUTING.md](CONTRIBUTING.md) for how to build the project, run the tests and propose a change, and use the
+[issue templates](https://github.com/masterthefly/tinylanguagebuilder/issues/new/choose) to report a problem or ask a question.
+
 ## Data
 
 The training text is [TinyStories](https://huggingface.co/datasets/roneneldan/TinyStories) by Ronen Eldan and Yuanzhi Li

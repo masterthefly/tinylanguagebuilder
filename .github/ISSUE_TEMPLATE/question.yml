@@ -1,0 +1,28 @@
+name: Question or something confusing
+description: You are learning and something is unclear (a textbook passage, a result, how to use it)
+labels: [question]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        No question is too basic. If a textbook sentence confused you, that is useful feedback too, because the
+        explanation can probably be improved.
+  - type: input
+    id: where
+    attributes:
+      label: Where did you run into it?
+      description: A link to the page, or the name of the chapter and section.
+    validations:
+      required: false
+  - type: textarea
+    id: question
+    attributes:
+      label: What would you like to understand?
+    validations:
+      required: true
+  - type: textarea
+    id: tried
+    attributes:
+      label: What have you tried or read so far?
+    validations:
+      required: false
