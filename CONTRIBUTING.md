@@ -18,6 +18,10 @@ the code, not the person.
   match the command line's.
 - **Try it in another browser or on another operating system.** Only Chromium on Windows has been tested so far.
 
+New here? Start with an issue labelled
+[good first issue](https://github.com/masterthefly/tinylanguagebuilder/issues?q=is%3Aissue+is%3Aopen+label%3A%22good+first+issue%22).
+Comment on it to say you are working on it, and ask if anything is unclear.
+
 If you are unsure whether an idea fits, open an issue first and describe what you would like to change and why.
 
 ## Set up
