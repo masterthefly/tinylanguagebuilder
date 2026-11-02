@@ -25,6 +25,23 @@ with an interactive textbook and a workbench for pre-training, fine-tuning and D
 - **Build:** open the app, pick a model size, and train a model in your browser tab. Fine-tune it and chat with it.
 - **Use it on your own material:** train on any `.txt` file, or teach it your own examples from a `.jsonl` file.
 
+## Screenshots
+
+**Train a model in your browser tab**, watch the loss fall and read the stories it writes along the way
+(a small 169k-parameter model after 1,200 steps, about 15 seconds on four workers):
+
+![The app after pre-training a small model: loss chart and sample stories](docs/screenshots/app.png)
+
+**Learn how it works** in the interactive textbook. Every widget runs the real engine:
+
+| Attention: who looks at whom | Learning: the loss falling |
+|---|---|
+| ![Attention heat map from a trained model](docs/screenshots/textbook-attention.png) | ![Training and held-out loss curves](docs/screenshots/textbook-learning.png) |
+
+**Select any text and press Explain** for a plain-language definition from the built-in glossary:
+
+![The Explain popover showing the definition of softmax](docs/screenshots/textbook-explain.png)
+
 ## What it can do
 
 - **Pre-train** a GPT-style transformer on plain text (tested on [TinyStories](https://huggingface.co/datasets/roneneldan/TinyStories)).
@@ -42,7 +59,7 @@ crates/
   tlm-cli/     the `tlm` binary: train / resume / generate / info / sft / dpo / chat
   tlm-wasm/    wasm-bindgen bindings used by the web app
 web/           the browser app (index.html, app.js, worker.js, store.js, style.css)
-scripts/       web build script, browser end-to-end test, benchmarks
+scripts/       web build script, end-to-end tests, benchmarks, screenshot script
 ```
 
 ## Requirements
