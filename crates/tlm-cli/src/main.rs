@@ -694,3 +694,84 @@ fn main() {
         std::process::exit(1);
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::{Args, held_out_count};
+
+    fn strings(raw: &[&str]) -> Vec<String> {
+        raw.iter().map(|s| s.to_string()).collect()
+    }
+
+    #[test]
+    fn parse_accepts_known_options_and_preserves_their_values() {
+        let args = Args::parse(&strings(&["--data", "a file.txt", "--prompt", ""]), &["data", "prompt"]).unwrap();
+        assert_eq!(args.require("data").unwrap(), "a file.txt");
+        assert_eq!(args.maybe("data").map(String::as_str), Some("a file.txt"));
+        assert_eq!(args.require("prompt").unwrap(), "");
+    }
+
+    #[test]
+    fn empty_arguments_use_defaults_and_have_no_optional_values() {
+        let args = Args::parse(&[], &["steps"]).unwrap();
+        assert_eq!(args.get("steps", 100usize).unwrap(), 100);
+        assert_eq!(args.maybe("steps"), None);
+    }
+
+    #[test]
+    fn unknown_options_list_the_allowed_names() {
+        let error = Args::parse(&strings(&["--other", "value"]), &["data", "steps"])
+            .err().expect("an unknown option must fail");
+        assert_eq!(error, "unknown option --other. Allowed: --data --steps");
+    }
+
+    #[test]
+    fn a_final_option_without_a_value_is_rejected() {
+        for raw in [strings(&["--steps"]), strings(&["--data", "file.txt", "--steps"])] {
+            let error = Args::parse(&raw, &["data", "steps"])
+                .err().expect("the final option needs a value");
+            assert_eq!(error, "--steps needs a value");
+        }
+    }
+
+    #[test]
+    fn bare_arguments_are_rejected() {
+        let error = Args::parse(&strings(&["data", "file.txt"]), &["data"])
+            .err().expect("options must start with two hyphens");
+        assert_eq!(error, "unexpected argument \"data\" (options look like --name value)");
+    }
+
+    #[test]
+    fn get_parses_numbers_instead_of_using_the_default() {
+        let args = Args::parse(&strings(&["--steps", "42", "--lr", "0.125"]), &["steps", "lr"]).unwrap();
+        assert_eq!(args.get("steps", 100usize).unwrap(), 42);
+        assert_eq!(args.get("lr", 1.0f32).unwrap(), 0.125);
+    }
+
+    #[test]
+    fn get_reports_the_option_and_invalid_value() {
+        for value in ["abc", "-1"] {
+            let args = Args::parse(&strings(&["--steps", value]), &["steps"]).unwrap();
+            assert_eq!(args.get("steps", 100usize).unwrap_err(),
+                format!("--steps: \"{value}\" is not a valid value"));
+        }
+    }
+
+    #[test]
+    fn require_reports_a_missing_option() {
+        let args = Args::parse(&[], &["data"]).unwrap();
+        assert_eq!(args.require("data").unwrap_err(), "missing required option --data");
+    }
+
+    #[test]
+    fn held_out_count_covers_half_minimum_and_ten_percent_boundaries() {
+        let cases = [
+            (0, 0), (1, 0), (2, 1), (3, 1), (39, 19),
+            (40, 20), (41, 20), (199, 20), (200, 20), (209, 20),
+            (210, 21), (1000, 100), (usize::MAX, usize::MAX / 10),
+        ];
+        for (n, expected) in cases {
+            assert_eq!(held_out_count(n), expected, "number of examples: {n}");
+        }
+    }
+}

@@ -148,7 +148,7 @@ settings were compared on the same held-out questions, so 77.4% is slightly opti
 ## Correctness
 
 Every gradient (embeddings, LayerNorm, attention, GELU, masked loss, the DPO loss) is checked numerically
-against finite differences. There are 130 native tests plus browser end-to-end tests: 51 checks for the app, and one
+against finite differences. There are 139 native tests plus browser end-to-end tests: 51 checks for the app, and one
 script for each textbook chapter, for the "Explain" glossary and for fine-tuning on your own examples. They are plain
 [Playwright](https://playwright.dev/) scripts. To run one:
 
@@ -166,7 +166,6 @@ node scripts/run-e2e.mjs http://localhost:8080/ scripts/e2e-web.mjs
 - Only Chromium has been tested. Firefox and Safari are untested.
 - Browser scaling flattens past 4–8 workers because all gradients pass through one leader worker.
 - Results are exact on one machine but not bit-identical across different CPUs.
-- The `tlm` CLI has no unit tests of its own.
 
 ## Contributing
 
